@@ -4,6 +4,8 @@ name="dev_boot"
 
 output_path="/lib/firmware"
 
+sd_path="/media/mmcblk0p1"
+
 copy_from_sd() {
   local sd_path=$1
   local filename=$2
@@ -42,18 +44,17 @@ start() {
   dev_boot=`cat /proc/device-tree/chosen/bootargs |
             sed -n -e 's/^.*dev_boot=\([^ ]*\).*/\1/p'`
 
-  if [ "$dev_boot" == "sd" ]; then
-    sd_path="/media/mmcblk0p1"
-    copy_from_sd $sd_path "piksi_firmware.elf"
-    copy_from_sd $sd_path "piksi_fpga.bit"
-  fi
-
   if [ "$dev_boot" == "net" ]; then
     # Get server ip from 'ip' bootarg
     server_ip=`cat /proc/device-tree/chosen/bootargs |
                sed -n -e 's/^.*ip=[^:]*:\([^:]*\).*/\1/p'`
     copy_from_net $server_ip "piksi_firmware.elf"
     copy_from_net $server_ip "piksi_fpga.bit"
+  fi
+
+  if [ "$dev_boot" == "sd" -o ! -e "$output_path/piski_firmware.elf" ]; then
+    copy_from_sd $sd_path "piksi_firmware.elf"
+    copy_from_sd $sd_path "piksi_fpga.bit"
   fi
 }
 
