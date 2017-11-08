@@ -29,16 +29,6 @@ static int led_i2c;
 
 static u8 brightness_cache[LED_ADP8866_LED_COUNT] = {0};
 
-/** Lock and start the I2C driver.
- */
-static void i2c_open(void) {
-}
-
-/** Unlock and stop the I2C driver.
- */
-static void i2c_close(void) {
-}
-
 /*
  * Duro connected different outputs of the adp8866 driver to the RGB
  * Unfortunately we need different routing on RGB for addressing this
@@ -108,9 +98,7 @@ static int i2c_write(u8 addr, u8 data) {
 static bool id_check(void) {
   bool read_ok;
   u8 mfdvid;
-  i2c_open();
   { read_ok = (i2c_read(LED_ADP8866_REG_MFDVID, &mfdvid) == 0); }
-  i2c_close();
 
   if (!read_ok) {
     piksi_log(LOG_WARNING, "Could not read LED driver ID register");
@@ -132,7 +120,6 @@ static bool id_check(void) {
 static bool configure(void) {
   bool ret = true;
 
-  i2c_open();
   {
     /* Configure all LEDs as independent sinks */
     if (i2c_write(LED_ADP8866_REG_CFGR,
@@ -207,7 +194,6 @@ static bool configure(void) {
       ret = false;
     }
   }
-  i2c_close();
 
   return ret;
 }
@@ -223,7 +209,6 @@ static bool leds_set(const led_adp8866_led_state_t *led_states,
                      u32 led_states_count) {
   bool ret = true;
 
-  i2c_open();
   {
     for (u32 i = 0; i < led_states_count; i++) {
       const led_adp8866_led_state_t *led_state = &led_states[i];
@@ -239,7 +224,6 @@ static bool leds_set(const led_adp8866_led_state_t *led_states,
       }
     }
   }
-  i2c_close();
 
   return ret;
 }
