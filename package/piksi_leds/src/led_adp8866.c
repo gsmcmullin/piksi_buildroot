@@ -70,7 +70,7 @@ static int i2c_read(u8 addr, u8 *data) {
     .buf = data,
   }};
   struct i2c_rdwr_ioctl_data transaction = {.msgs = msgs, .nmsgs = 2};
-  return ioctl(led_i2c, I2C_RDWR, &transaction);
+  return ioctl(led_i2c, I2C_RDWR, &transaction) < 0;
 }
 
 /** Perform an I2C write operation.
@@ -88,7 +88,7 @@ static int i2c_write(u8 addr, u8 data) {
     .buf = buf,
   }};
   struct i2c_rdwr_ioctl_data transaction = {.msgs = msgs, .nmsgs = 1};
-  return ioctl(led_i2c, I2C_RDWR, &transaction);
+  return ioctl(led_i2c, I2C_RDWR, &transaction) < 0;
 }
 
 /** Verify the contents of the MFDVID register.
