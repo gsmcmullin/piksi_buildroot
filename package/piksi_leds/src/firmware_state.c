@@ -15,6 +15,7 @@
 
 #include <libsbp/observation.h>
 #include <libsbp/navigation.h>
+#include <libsbp/system.h>
 
 enum mode {
   MODE_INVALID,
@@ -34,6 +35,7 @@ static struct {
     struct timespec systime;
     enum mode mode;
   } spp;
+  bool antenna;
 } soln_state;
 
 static void sbp_msg_obs_callback(u16 sender_id, u8 len, u8 msg[], void *ctx)
@@ -60,6 +62,12 @@ static void sbp_msg_baseline_ecef_callback(u16 sender_id, u8 len, u8 msg_[], voi
   soln_state.dgnss.mode = msg->flags & 7;
 }
 
+static void sbp_msg_heartbeat_callback(u16 sender_id, u8 len, u8 msg_[], void *ctx)
+{
+  msg_heartbeat_t *msg = (void*)msg_;
+  soln_state.antenna = msg->flags >> 31;
+}
+
 void firmware_state_init(sbp_zmq_rx_ctx_t *ctx)
 {
   sbp_zmq_rx_callback_register(ctx, SBP_MSG_OBS,
@@ -68,5 +76,6 @@ void firmware_state_init(sbp_zmq_rx_ctx_t *ctx)
                                sbp_msg_pos_ecef_callback, NULL, NULL);
   sbp_zmq_rx_callback_register(ctx, SBP_MSG_BASELINE_ECEF,
                                sbp_msg_baseline_ecef_callback, NULL, NULL);
-
+  sbp_zmq_rx_callback_register(ctx, SBP_MSG_HEARTBEAT,
+                               sbp_msg_heartbeat_callback, NULL, NULL);
 }
