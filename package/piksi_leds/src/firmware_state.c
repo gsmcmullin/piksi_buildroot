@@ -18,27 +18,10 @@
 #include <libsbp/system.h>
 #include <libsbp/tracking.h>
 
-enum mode {
-  MODE_INVALID,
-  MODE_SPP,
-  MODE_DGNSS,
-  MODE_FLOAT,
-  MODE_FIXED,
-};
+#include "firmware_state.h"
 
 static u8 base_obs_counter;
-static struct {
-  struct {
-    struct timespec systime;
-    enum mode mode;
-  } dgnss;
-  struct {
-    struct timespec systime;
-    enum mode mode;
-  } spp;
-  int sats;
-  bool antenna;
-} soln_state;
+static struct soln_state soln_state;
 
 static void sbp_msg_obs_callback(u16 sender_id, u8 len, u8 msg[], void *ctx)
 {
@@ -53,15 +36,15 @@ u8 firmware_state_obs_counter_get(void)
 static void sbp_msg_pos_ecef_callback(u16 sender_id, u8 len, u8 msg_[], void *ctx)
 {
   msg_pos_ecef_t *msg = (void*)msg_;
-  clock_gettime(CLOCK_MONOTONIC, &soln_state.spp.systime);
   soln_state.spp.mode = msg->flags & 7;
+  clock_gettime(CLOCK_MONOTONIC, &soln_state.spp.systime);
 }
 
 static void sbp_msg_baseline_ecef_callback(u16 sender_id, u8 len, u8 msg_[], void *ctx)
 {
   msg_baseline_ecef_t *msg = (void*)msg_;
-  clock_gettime(CLOCK_MONOTONIC, &soln_state.dgnss.systime);
   soln_state.dgnss.mode = msg->flags & 7;
+  clock_gettime(CLOCK_MONOTONIC, &soln_state.dgnss.systime);
 }
 
 static void sbp_msg_heartbeat_callback(u16 sender_id, u8 len, u8 msg_[], void *ctx)
@@ -80,6 +63,11 @@ static void sbp_msg_tracking_state_callback(u16 sender_id, u8 len, u8 msg_[], vo
       sats++;
   }
   soln_state.sats = sats;
+}
+
+void firmware_state_get(struct soln_state *out)
+{
+  memcpy(out, &soln_state, sizeof(*out));
 }
 
 void firmware_state_init(sbp_zmq_rx_ctx_t *ctx)
